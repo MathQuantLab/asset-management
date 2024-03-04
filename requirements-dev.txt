@@ -1,4 +1,4 @@
 black
-back[jupyter]
+black[jupyter]
 flake8
 isort
