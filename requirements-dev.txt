@@ -1,0 +1,4 @@
+black
+back[jupyter]
+flake8
+isort
