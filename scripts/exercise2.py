@@ -95,3 +95,141 @@ gii = gii / 100 # Converting from percentage to decimal
 gi_b = np.sum(weights * gii) # green intensity of the benchmark portfolio
 
 #--------------------------------------------
+#Question 2.b
+
+def solve_esg_qp_problem(t: float) -> np.ndarray:
+    """Solver for the quadratic programming problem
+
+    Args:
+        t (float): t parameter
+
+    Returns:
+        np.ndarray: optimal portfolio weights
+    """
+    w = cp.Variable(11, "w")  # Portfolio weights
+
+    objective = cp.Minimize(0.5 * cp.quad_form(w, cov_mat))
+    constraints = [
+        cp.sum(w) == 1,
+        0 <= w,
+        w <= 1,
+        cp.sum(sci12 * w) <= 0.7 * (0.93**t) * ci_b,
+    ]
+    problem = cp.Problem(objective, constraints)
+
+    problem.solve()
+
+    return w.value
+
+optimal_pfs12 = {}
+
+for t in (0, 1, 2, 5, 10):
+
+    sol = solve_esg_qp_problem(t)
+
+    #print("Optimal portfolio for t =", t, ":", sol)
+
+    tracking_eror_volatility = np.sqrt(
+        (sol - weights).T.dot(cov_mat).dot(sol - weights)
+    )
+
+    #print("Tracking error volatility:", tracking_eror_volatility)
+
+    carbon_intensity = sci12.dot(sol)
+
+    #print("Carbon intensity:", carbon_intensity)
+
+    carbon_momentum = cm12.dot(sol)
+
+    #print("Carbon momentum:", carbon_momentum)
+    green_intensity = gii.dot(sol)
+
+    #print("Green intensity:", green_intensity)
+
+    reduction_rate = 1 - (sci12.dot(sol)) / (ci_b)
+
+    #print("Reduction rate:", reduction_rate)
+    optimal_pfs12[t] = sol
+    
+#--------------------------------------------
+#Question 2.c
+
+scii13 = np.array([78, 203, 392, 803, 55, 124, 283, 123, 892, 135, 1867]) # vector of carbon intensity of the assets for scope 1, 2 and 3
+
+ci13_b = np.sum(weights * scii13) # carbon intensity of the benchmark portfolio for scope 1, 2 and 3
+ci13_b
+
+cmi13 = np.array([-0.8, -1.6, -0.1, -0.2, -1.9, -2.0, -2.5, 2.1, -3.6, -0.8, -6.8]) # vector of carbon momentum of the assets for scope 1, 2 and 3
+cmi13 = cmi13 / 100 # Converting from percentage to decimal
+
+def solve_esg_qp_problem13(t: float) -> np.ndarray:
+    """Solver for the quadratic programming problem
+
+    Args:
+        t (float): t parameter
+
+    Returns:
+        np.ndarray: optimal portfolio weights
+    """
+    w = cp.Variable(11, "w")  # Portfolio weights
+
+    objective = cp.Minimize(0.5 * cp.quad_form(w, cov_mat))
+    constraints = [
+        cp.sum(w) == 1,
+        0 <= w,
+        w <= 1,
+        cp.sum(scii13 * w) <= 0.7 * (0.93**t) * ci13_b,
+    ]
+    problem = cp.Problem(objective, constraints)
+
+    problem.solve()
+
+    return w.value
+
+optimal_pfs13 = {}
+
+for t in (0, 1, 2, 5, 10):
+
+    sol = solve_esg_qp_problem13(t)
+
+    #print("Optimal portfolio for t =", t, ":", sol)
+
+    tracking_eror_volatility = np.sqrt(
+        (sol - weights).T.dot(cov_mat).dot(sol - weights)
+    )
+
+    #print("Tracking error volatility:", tracking_eror_volatility)
+
+    carbon_intensity = scii13.dot(sol)
+
+    #print("Carbon intensity:", carbon_intensity)
+
+    carbon_momentum = cmi13.dot(sol)
+
+    #print("Carbon momentum:", carbon_momentum)
+    green_intensity = gii.dot(sol)
+
+    #print("Green intensity:", green_intensity)
+
+    reduction_rate = 1 - (scii13.dot(sol)) / (ci13_b)
+
+    #print("Reduction rate:", reduction_rate)
+    optimal_pfs13[t] = sol
+    
+#--------------------------------------------
+#Question 2.d
+for key12, key13 in zip(optimal_pfs12, optimal_pfs13):
+    implied_expected_return = expected_returns.dot(optimal_pfs12[key12])
+    print(
+        "Implied expected, taking into consideration 1 and 2, return for t =",
+        key12,
+        ":",
+        np.sum(implied_expected_return - expected_returns),
+    )
+    implied_expected_return = expected_returns.dot(optimal_pfs13[key13])
+    print(
+        "Implied expected, taking into consideration 1, 2 and 3, return for t =",
+        key13,
+        ":",
+        np.sum(implied_expected_return - expected_returns),
+    )
