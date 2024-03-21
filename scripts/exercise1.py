@@ -1,3 +1,6 @@
+# Authors : GHAITH Sarahnour, ROISEUX Thomas 
+# Date: 2024/03/21
+
 import cvxpy as cp
 import numpy as np
 
